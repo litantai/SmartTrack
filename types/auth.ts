@@ -13,11 +13,12 @@ export enum UserStatus {
 
 // 权限矩阵
 export const PERMISSIONS = {
-  admin: ['*'], // 所有权限
-  scheduler: ['booking:create', 'booking:update', 'vehicle:assign'],
-  driver: ['task:view', 'task:update', 'report:submit'],
-  reviewer: ['booking:approve', 'report:view', 'analytics:view']
+  admin: ['*'] as const, // 所有权限
+  scheduler: ['booking:create', 'booking:update', 'vehicle:assign'] as const,
+  driver: ['task:view', 'task:update', 'report:submit'] as const,
+  reviewer: ['booking:approve', 'report:view', 'analytics:view'] as const
 } as const;
 
 export type UserRoleType = 'admin' | 'scheduler' | 'driver' | 'reviewer';
 export type UserStatusType = 'active' | 'inactive' | 'suspended';
+export type PermissionType = typeof PERMISSIONS[UserRoleType][number];
