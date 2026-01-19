@@ -51,7 +51,6 @@ const UserSchema = new Schema<IUser>({
 });
 
 // 索引优化
-UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ role: 1, status: 1 });
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

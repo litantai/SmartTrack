@@ -1,46 +1,9 @@
 import type { NextAuthConfig } from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import bcrypt from 'bcryptjs';
-import { connectToDatabase } from '@/lib/db/mongoose';
-import User from '@/lib/db/models/User';
-import { LoginSchema } from '@/lib/validations/auth';
 
 export const authConfig = {
-  // 1. 提供者配置
-  providers: [
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        email: { label: "邮箱", type: "email" },
-        password: { label: "密码", type: "password" }
-      },
-      async authorize(credentials) {
-        // 参数验证
-        const validatedFields = LoginSchema.safeParse(credentials);
-        if (!validatedFields.success) return null;
-
-        const { email, password } = validatedFields.data;
-
-        // 数据库查询
-        await connectToDatabase();
-        const user = await User.findOne({ email, status: 'active' });
-        if (!user) return null;
-
-        // 密码验证
-        const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) return null;
-
-        // 返回安全的用户信息
-        return {
-          id: user._id.toString(),
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          image: user.avatar
-        };
-      }
-    })
-  ],
+  // 1. 提供者配置 - 注意：在 Edge Runtime 中运行的配置不能包含数据库操作
+  // 实际的认证逻辑在 auth.ts 中的 Node.js 运行时执行
+  providers: [],
 
   // 2. 会话策略
   session: {
@@ -50,6 +13,37 @@ export const authConfig = {
 
   // 3. 回调函数
   callbacks: {
+    // 授权回调 - 用于中间件
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isAuthPage = nextUrl.pathname.startsWith('/login') || 
+                         nextUrl.pathname.startsWith('/register');
+      const isProtectedRoute = nextUrl.pathname.startsWith('/dashboard') || 
+                              nextUrl.pathname.startsWith('/admin');
+
+      // 已登录用户访问登录/注册页，重定向到首页
+      if (isAuthPage && isLoggedIn) {
+        return Response.redirect(new URL('/', nextUrl));
+      }
+
+      // 未登录用户访问受保护路由，重定向到登录页
+      if (isProtectedRoute && !isLoggedIn) {
+        return false; // 这会自动重定向到登录页
+      }
+
+      // 基于角色的访问控制
+      if (isLoggedIn && isProtectedRoute) {
+        const userRole = auth?.user?.role;
+        
+        // 管理员路由保护
+        if (nextUrl.pathname.startsWith('/admin') && userRole !== 'admin') {
+          return Response.redirect(new URL('/dashboard', nextUrl));
+        }
+      }
+
+      return true;
+    },
+
     // JWT 回调：将 role 和 id 注入令牌
     async jwt({ token, user }) {
       if (user) {

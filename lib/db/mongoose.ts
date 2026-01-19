@@ -2,10 +2,6 @@ import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGODB_URI) {
-  throw new Error('请在 .env 文件中定义 MONGODB_URI 环境变量');
-}
-
 /**
  * 全局缓存，防止在开发环境中因热重载导致的连接泄漏
  */
@@ -29,6 +25,10 @@ if (!global.mongoose) {
  * 使用连接池和缓存优化性能
  */
 export async function connectToDatabase(): Promise<typeof mongoose> {
+  if (!MONGODB_URI) {
+    throw new Error('请在 .env 文件中定义 MONGODB_URI 环境变量');
+  }
+
   if (cached.conn) {
     return cached.conn;
   }
@@ -38,7 +38,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
       console.log('✅ MongoDB 连接成功');
       return mongoose;
     });
