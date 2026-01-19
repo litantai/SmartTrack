@@ -28,7 +28,7 @@ export const authConfig = {
 
       // 未登录用户访问受保护路由，重定向到登录页
       if (isProtectedRoute && !isLoggedIn) {
-        return false; // 这会自动重定向到登录页
+        return false; // NextAuth will redirect to the signIn page configured in pages.signIn
       }
 
       // 基于角色的访问控制
