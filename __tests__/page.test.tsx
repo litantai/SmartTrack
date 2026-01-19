@@ -1,14 +1,14 @@
 import { render, screen } from '@testing-library/react'
 import Home from '@/app/page'
-import '@testing-library/jest-dom'
 
 describe('Home', () => {
   it('renders the Home component', () => {
     render(<Home />)
     
     // Check if the main heading "SmartTrack" is present in the document
-    const heading = screen.getByText('SmartTrack', { 
-      selector: 'h1'
+    const heading = screen.getByRole('heading', { 
+      level: 1,
+      name: /SmartTrack/i
     })
     expect(heading).toBeInTheDocument()
   })
