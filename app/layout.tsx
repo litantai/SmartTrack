@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AuthProvider from "@/components/providers/AuthProvider";
 
 export const metadata: Metadata = {
   title: "SmartTrack 智能试车场综合管理系统",
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="antialiased">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
