@@ -9,6 +9,12 @@
 SmartTrack 使用 GitHub Actions + Vercel 实现自动化部署。以下文档将帮助你理解和配置部署流程：
 
 #### 快速开始
+- **[PR6_合并前必读.md](./PR6_合并前必读.md)** 🔴 重要！PR #6 合并前必读
+  - 合并前必须完成的配置
+  - GitHub Secrets 配置步骤
+  - Vercel Token 创建指南
+  - 配置检查清单
+
 - **[DEPLOYMENT_QUICKSTART.md](./DEPLOYMENT_QUICKSTART.md)** ⭐ 推荐首次阅读
   - 5 分钟快速上手指南
   - 最少配置步骤
@@ -84,6 +90,11 @@ SmartTrack 使用 NextAuth.js v5 实现完整的认证和基于角色的访问�
 
 ### 我想...
 
+#### 合并 PR #6 之前
+1. **必读** [PR6_合并前必读.md](./PR6_合并前必读.md) 
+2. 完成 [GitHub Secrets 配置](./GITHUB_SECRETS_SETUP.md)
+3. 验证配置是否正确
+
 #### 开始部署
 1. 阅读 [DEPLOYMENT_QUICKSTART.md](./DEPLOYMENT_QUICKSTART.md)
 2. 配置 [GitHub Secrets](./GITHUB_SECRETS_SETUP.md)
@@ -110,10 +121,10 @@ SmartTrack 使用 NextAuth.js v5 实现完整的认证和基于角色的访问�
 
 ## 📊 文档统计
 
-- **部署相关**: 6 个文档
+- **部署相关**: 7 个文档
 - **认证相关**: 3 个文档
 - **开发指南**: 1 个文档
-- **总计**: 10 个文档
+- **总计**: 11 个文档
 
 ## 🔄 文档更新日志
 
