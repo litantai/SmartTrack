@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -34,13 +38,18 @@ jobs:
         id: deploy
         run: |
           if [ "${{ github.event_name }}" == "push" ]; then
+            echo "🚀 部署到生产环境..."
             vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} > deployment-url.txt
             echo "environment=production" >> $GITHUB_OUTPUT
+            echo "environment_cn=生产环境" >> $GITHUB_OUTPUT
           else
+            echo "🧪 部署到预览环境..."
             vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} > deployment-url.txt
             echo "environment=preview" >> $GITHUB_OUTPUT
+            echo "environment_cn=预览环境" >> $GITHUB_OUTPUT
           fi
           echo "url=$(cat deployment-url.txt)" >> $GITHUB_OUTPUT
+          echo "✅ 部署成功！"
 
       - name: Comment on PR
         if: github.event_name == 'pull_request'
@@ -52,7 +61,10 @@ jobs:
             
             **预览环境**: ${deployment_url}
             
-            本次提交已自动部署到 Vercel 预览环境。`;
+            本次提交已自动部署到 Vercel 预览环境，可以点击上面的链接查看效果。
+            
+            ---
+            💡 提示：合并到 \`main\` 分支后将自动部署到生产环境。`;
             
             github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -63,7 +75,13 @@ jobs:
 
       - name: Summary
         run: |
-          echo "### 🎉 Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎉 部署成功" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment**: ${{ steps.deploy.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "**URL**: ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**环境**: ${{ steps.deploy.outputs.environment_cn }}" >> $GITHUB_STEP_SUMMARY
+          echo "**访问地址**: ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "✅ 生产环境已更新，用户可以访问最新版本。" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ 预览环境已就绪，可以进行测试和代码审查。" >> $GITHUB_STEP_SUMMARY
+          fi

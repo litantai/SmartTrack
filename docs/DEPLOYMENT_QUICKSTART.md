@@ -130,9 +130,14 @@ A: 会的，PR 关闭后 Vercel 会自动清理预览部署。
 **Q: 如何查看部署日志？**  
 A: GitHub Actions 页面或 Vercel 控制台的 Deployments 部分。
 
+**Q: 为什么 PR #5 合并后没有自动部署？**  
+A: PR #5 之前项目还没有配置 GitHub Actions 工作流。现在已经配置好了，以后的 PR 合并都会自动部署。查看 [FAQ](./DEPLOYMENT_FAQ.md) 了解详情。
+
 ## 📚 更多信息
 
-详细文档请参考：[docs/DEPLOYMENT.md](./DEPLOYMENT.md)
+- **详细部署指南**: [docs/DEPLOYMENT.md](./DEPLOYMENT.md)
+- **常见问题解答**: [docs/DEPLOYMENT_FAQ.md](./DEPLOYMENT_FAQ.md)
+- **GitHub Secrets 配置**: [docs/GITHUB_SECRETS_SETUP.md](./GITHUB_SECRETS_SETUP.md)
 
 ---
 
