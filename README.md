@@ -66,6 +66,7 @@ SmartTrack 专为现代汽车试车场打造，旨在解决传统管理中调度
 ### 部署与运维 (DevOps)
 - **Platform**: Vercel (CI/CD 自动化)。
 - **Database Cloud**: MongoDB Atlas。
+- **CI/CD**: GitHub Actions 自动化部署流水线。
 
 ---
 
@@ -89,6 +90,25 @@ SmartTrack 专为现代汽车试车场打造，旨在解决传统管理中调度
    npm run dev
    ```
    访问 `http://localhost:3000` 开启智能管理之旅。
+
+---
+
+## 📦 部署说明
+
+SmartTrack 使用 GitHub Actions + Vercel 实现自动化部署：
+
+- **预览环境**: 创建 Pull Request → 自动部署预览版本 → 在 PR 中查看预览链接
+- **生产环境**: 合并到 main 分支 → 自动部署到生产环境 → 更新 https://smart-track-nine.vercel.app
+
+### 快速配置
+
+1. 在 [Vercel](https://vercel.com) 导入本项目
+2. 在 GitHub 仓库添加 Secret: `VERCEL_TOKEN`
+3. 配置环境变量（MongoDB、NextAuth 等）
+
+**详细文档**: 
+- 📖 [完整部署指南](docs/DEPLOYMENT.md)
+- ⚡ [快速开始](docs/DEPLOYMENT_QUICKSTART.md)
 
 ---
 
