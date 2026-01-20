@@ -7,6 +7,6 @@
     "enabled": true,
     "autoAlias": true,
     "silent": false,
-    "autoJobCancelation": true
+    "autoJobCancellation": true
   }
 }
