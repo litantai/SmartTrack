@@ -49,25 +49,7 @@
 
 这一步不是必须的，但强烈推荐配置，可以让部署更快更准确。
 
-#### 方法 1：通过 Vercel 网页获取
-
-1. **登录 Vercel 并进入项目**
-   - 访问：https://vercel.com/dashboard
-   - 找到并点击 `smart-track` 项目
-
-2. **查看项目设置**
-   - 点击 **"Settings"** 标签
-   - 在 **"General"** 页面中找到以下信息：
-     * **Project ID**: 复制这个 ID
-     * **Team ID** 或 **Owner ID**: 也复制下来
-
-3. **添加到 GitHub Secrets**
-   - 返回 GitHub Secrets 页面（步骤 2 中的地址）
-   - 添加两个新的 Secrets：
-     * Name: `VERCEL_PROJECT_ID`，Secret: 粘贴项目 ID
-     * Name: `VERCEL_ORG_ID`，Secret: 粘贴 Team/Owner ID
-
-#### 方法 2：通过 Vercel CLI 获取（适合技术人员）
+#### 方法 1：通过 Vercel CLI 获取（推荐）
 
 ```bash
 # 1. 安装 Vercel CLI
@@ -76,7 +58,7 @@ npm install -g vercel
 # 2. 登录
 vercel login
 
-# 3. 链接项目（在项目根目录执行）
+# 3. 在项目根目录链接项目
 cd /path/to/SmartTrack
 vercel link
 
@@ -88,7 +70,27 @@ cat .vercel/project.json
 - `"projectId"`: 这就是 `VERCEL_PROJECT_ID`
 - `"orgId"`: 这就是 `VERCEL_ORG_ID`
 
-将这两个值添加到 GitHub Secrets 中。
+**添加到 GitHub Secrets**：
+- 返回 GitHub Secrets 页面
+- 分别添加 `VERCEL_PROJECT_ID` 和 `VERCEL_ORG_ID`
+
+#### 方法 2：通过 Vercel 网页获取（仅 Project ID）
+
+如果不方便使用 CLI，至少可以获取 Project ID：
+
+1. **登录 Vercel 并进入项目**
+   - 访问：https://vercel.com/dashboard
+   - 找到并点击 `smart-track` 项目
+
+2. **查看项目设置**
+   - 点击 **"Settings"** 标签
+   - 在 **"General"** 页面中找到：
+     * **Project ID**: 复制这个 ID
+
+3. **添加到 GitHub Secrets**
+   - Name: `VERCEL_PROJECT_ID`，Secret: 粘贴项目 ID
+
+⚠️ **注意**：`VERCEL_ORG_ID` 在 Vercel 网页界面中可能不显示，建议使用 CLI 方法获取。
 
 ### 第 4 步：检查 Vercel 环境变量
 

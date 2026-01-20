@@ -40,7 +40,7 @@
 
 #### 获取步骤：
 
-**方法 1: 通过 Vercel CLI**
+**方法 1: 通过 Vercel CLI（推荐）**
 ```bash
 # 安装 Vercel CLI
 npm install -g vercel
@@ -55,10 +55,8 @@ cat .vercel/project.json
 ```
 
 **方法 2: 通过 Vercel 控制台**
-1. 进入 Vercel 项目设置
-2. 在 **Settings** → **General** 中
-3. 找到 **Team ID**（团队账户）或 **Owner ID**（个人账户）
-4. 复制该 ID
+
+⚠️ **注意**：`VERCEL_ORG_ID` 在 Vercel 网页界面中可能不显示或难以找到。如果在项目设置的 **Settings** → **General** 页面中没有看到 **Team ID** 或 **Owner ID**，请使用上面的 CLI 方法获取。
 
 #### 添加到 GitHub：
 
