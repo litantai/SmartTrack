@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { XCircle } from 'lucide-react';
 
 interface DatabaseStatus {
   isConnected: boolean;
@@ -14,7 +14,7 @@ export default function DatabaseStatusIndicator() {
   const [status, setStatus] = useState<DatabaseStatus | null>(null);
   const [isChecking, setIsChecking] = useState(false);
 
-  const checkStatus = async () => {
+  const checkStatus = useCallback(async () => {
     setIsChecking(true);
     try {
       const response = await fetch('/api/health/database');
@@ -42,7 +42,7 @@ export default function DatabaseStatusIndicator() {
     } finally {
       setIsChecking(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // 初始检查
@@ -52,7 +52,7 @@ export default function DatabaseStatusIndicator() {
     const interval = setInterval(checkStatus, 30000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [checkStatus]);
 
   if (!status) {
     return null;

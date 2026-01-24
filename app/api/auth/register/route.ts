@@ -73,17 +73,23 @@ export async function POST(request: NextRequest) {
     let errorMessage = '注册失败，请稍后重试';
     
     if (error instanceof Error) {
-      // MongoDB 连接错误
-      if (error.message.includes('connect') || error.message.includes('ECONNREFUSED')) {
+      // MongoDB 连接错误 - 使用 name 属性检查
+      if (error.name === 'MongoNetworkError' || error.name === 'MongooseServerSelectionError') {
         errorMessage = '数据库连接失败，请检查网络连接';
       }
       // MongoDB 验证错误
-      else if (error.message.includes('validation')) {
+      else if (error.name === 'ValidationError') {
         errorMessage = '数据验证失败，请检查输入信息';
       }
-      // 其他已知错误
+      // 配置错误
       else if (error.message.includes('MONGODB_URI')) {
         errorMessage = '数据库配置错误';
+      }
+      // 其他连接相关错误
+      else if (error.message.toLowerCase().includes('connect') || 
+               error.message.includes('ECONNREFUSED') ||
+               error.message.includes('ETIMEDOUT')) {
+        errorMessage = '数据库连接失败，请检查网络连接';
       }
       
       console.error('详细错误信息:', error.message);
