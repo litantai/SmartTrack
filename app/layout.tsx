@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AuthProvider from "@/components/providers/AuthProvider";
+import DatabaseStatusIndicator from "@/components/DatabaseStatusIndicator";
 
 export const metadata: Metadata = {
   title: "SmartTrack 智能试车场综合管理系统",
@@ -17,6 +18,7 @@ export default function RootLayout({
       <body className="antialiased">
         <AuthProvider>
           {children}
+          <DatabaseStatusIndicator />
         </AuthProvider>
       </body>
     </html>
