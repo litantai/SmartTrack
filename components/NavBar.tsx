@@ -46,22 +46,22 @@ export default function NavBar() {
               <div className="px-4 py-2 bg-gray-200 text-gray-500 rounded-lg animate-pulse">
                 加载中...
               </div>
-            ) : isAuthenticated && user ? (
+            ) : isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
                   className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <User className="h-4 w-4" />
-                  <span>{user.name}</span>
+                  <span>{user?.name || user?.email || '用户'}</span>
                 </button>
                 
                 {showDropdown && (
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
                     <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                      <p className="text-xs text-gray-500 mt-1">角色: {user.role}</p>
+                      <p className="text-sm font-semibold text-gray-900">{user?.name || '用户'}</p>
+                      <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
+                      <p className="text-xs text-gray-500 mt-1">角色: {user?.role || '未知'}</p>
                     </div>
                     <Link
                       href="/dashboard"
