@@ -1,0 +1,126 @@
+name: Auto-merge PRs on Vercel Success
+
+on:
+  status:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_numbers:
+        description: 'PR numbers to check and merge (comma-separated, e.g., 8,9)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: read
+
+jobs:
+  check-and-merge:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Check Vercel build status and merge PRs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          
+          # Function to check PR status
+          check_pr_status() {
+            local pr_number=$1
+            echo "==================================="
+            echo "Checking PR #$pr_number"
+            echo "==================================="
+            
+            # Get PR details
+            pr_data=$(gh pr view $pr_number --json state,mergeable,mergeStateStatus,statusCheckRollup)
+            
+            state=$(echo "$pr_data" | jq -r '.state')
+            mergeable=$(echo "$pr_data" | jq -r '.mergeable')
+            merge_state=$(echo "$pr_data" | jq -r '.mergeStateStatus')
+            
+            echo "State: $state"
+            echo "Mergeable: $mergeable"
+            echo "Merge State: $merge_state"
+            
+            if [ "$state" != "OPEN" ]; then
+              echo "❌ PR #$pr_number is not open (state: $state)"
+              return 1
+            fi
+            
+            if [ "$mergeable" != "MERGEABLE" ]; then
+              echo "❌ PR #$pr_number is not mergeable (mergeable: $mergeable)"
+              return 1
+            fi
+            
+            # Check Vercel status specifically
+            vercel_status=$(echo "$pr_data" | jq -r '.statusCheckRollup[] | select(.context == "Vercel" or .context == "vercel") | .state' | head -n1)
+            
+            echo "Vercel Status: $vercel_status"
+            
+            if [ "$vercel_status" != "SUCCESS" ]; then
+              echo "❌ Vercel build has not succeeded for PR #$pr_number (status: $vercel_status)"
+              return 1
+            fi
+            
+            # Check overall status
+            overall_status=$(echo "$pr_data" | jq -r '.statusCheckRollup[].state' | sort -u)
+            failed_checks=$(echo "$pr_data" | jq -r '.statusCheckRollup[] | select(.state == "FAILURE" or .state == "ERROR") | .context')
+            
+            if [ -n "$failed_checks" ]; then
+              echo "❌ Some checks failed:"
+              echo "$failed_checks"
+              return 1
+            fi
+            
+            echo "✅ All checks passed for PR #$pr_number"
+            return 0
+          }
+          
+          # Function to merge PR
+          merge_pr() {
+            local pr_number=$1
+            echo "Merging PR #$pr_number..."
+            
+            if gh pr merge $pr_number --squash --auto; then
+              echo "✅ Successfully merged PR #$pr_number"
+              return 0
+            else
+              echo "❌ Failed to merge PR #$pr_number"
+              return 1
+            fi
+          }
+          
+          # Main logic
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # Manual trigger with specific PR numbers
+            IFS=',' read -ra PR_ARRAY <<< "${{ inputs.pr_numbers }}"
+            
+            for pr_num in "${PR_ARRAY[@]}"; do
+              pr_num=$(echo $pr_num | xargs)  # trim whitespace
+              if check_pr_status "$pr_num"; then
+                merge_pr "$pr_num"
+              fi
+            done
+          else
+            # Triggered by status or PR event
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              pr_number="${{ github.event.pull_request.number }}"
+            else
+              # Get PR number from commit SHA
+              pr_number=$(gh pr list --state open --json number,headRefOid --jq ".[] | select(.headRefOid == \"${{ github.sha }}\") | .number")
+            fi
+            
+            if [ -n "$pr_number" ]; then
+              if check_pr_status "$pr_number"; then
+                merge_pr "$pr_number"
+              fi
+            else
+              echo "No PR found for this commit"
+            fi
+          fi
