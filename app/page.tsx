@@ -1,28 +1,12 @@
 import { Calendar, Car, Users, Eye, BarChart3, Rocket, Shield, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import NavBar from "@/components/NavBar";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Navigation */}
-      <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <Car className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">SmartTrack</span>
-            </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors">功能</a>
-              <a href="#values" className="text-gray-700 hover:text-blue-600 transition-colors">价值</a>
-              <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">联系我们</a>
-              <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                登录
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <NavBar />
 
       {/* Hero Section */}
       <section className="pt-20 pb-32 px-4 sm:px-6 lg:px-8">
