@@ -21,16 +21,16 @@ export default function Home() {
               <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors">功能</a>
               <a href="#values" className="text-gray-700 hover:text-blue-600 transition-colors">价值</a>
               <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">联系我们</a>
-              {!isLoading && (
-                isAuthenticated ? (
-                  <Link href="/dashboard" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    {user?.name || '控制台'}
-                  </Link>
-                ) : (
-                  <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    登录
-                  </Link>
-                )
+              {isLoading ? (
+                <div className="px-4 py-2 bg-gray-300 text-white rounded-lg animate-pulse w-20 h-10"></div>
+              ) : isAuthenticated ? (
+                <Link href="/dashboard" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  {user?.name || '进入控制台'}
+                </Link>
+              ) : (
+                <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  登录
+                </Link>
               )}
             </div>
           </div>
@@ -50,16 +50,16 @@ export default function Home() {
             让试车场管理更智能、更高效、更安全。一站式数字化解决方案，连接人、车、场地与数据。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            {!isLoading && (
-              isAuthenticated ? (
-                <Link href="/dashboard" className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto text-center">
-                  进入控制台
-                </Link>
-              ) : (
-                <Link href="/login" className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto text-center">
-                  立即开始
-                </Link>
-              )
+            {isLoading ? (
+              <div className="px-8 py-4 bg-gray-300 rounded-lg animate-pulse w-full sm:w-40 h-14"></div>
+            ) : isAuthenticated ? (
+              <Link href="/dashboard" className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto text-center">
+                进入控制台
+              </Link>
+            ) : (
+              <Link href="/login" className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto text-center">
+                立即开始
+              </Link>
             )}
             <a href="#features" className="px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-lg border-2 border-blue-600 hover:bg-blue-50 transition-colors w-full sm:w-auto text-center">
               了解更多
