@@ -6,7 +6,6 @@
 import '@testing-library/jest-dom';
 
 // 设置环境变量（测试环境）
-process.env.NODE_ENV = 'test';
 process.env.NEXTAUTH_SECRET = 'test-secret-key-for-jest';
 process.env.NEXTAUTH_URL = 'http://localhost:3000';
 
