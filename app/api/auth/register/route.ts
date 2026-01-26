@@ -1,8 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { connectToDatabase } from '@/lib/db/mongoose';
-import User from '@/lib/db/models/User';
+import { NextRequest } from 'next/server';
 import { RegisterSchema } from '@/lib/validations/auth';
+import { AuthService, AuthServiceError } from '@/lib/db/services/auth.service';
+import {
+  successResponse,
+  validationErrorResponse,
+  conflictResponse,
+  databaseErrorResponse,
+  internalErrorResponse,
+} from '@/lib/utils/api-response';
+import { ApiErrorCode } from '@/lib/types/api';
+
+// 显式声明使用 Node.js Runtime（局域网部署要求）
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,97 +20,47 @@ export async function POST(request: NextRequest) {
     // 1. 使用 Zod 验证请求参数
     const validatedFields = RegisterSchema.safeParse(body);
     if (!validatedFields.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: validatedFields.error.issues[0].message,
-          data: null
-        },
-        { status: 400 }
+      return validationErrorResponse(
+        validatedFields.error.issues[0].message,
+        { field: validatedFields.error.issues[0].path[0] }
       );
     }
 
-    const { name, email, password, role } = validatedFields.data;
+    // 2. 调用 Service 层处理业务逻辑
+    const result = await AuthService.register(validatedFields.data);
 
-    // 2. 连接数据库
-    await connectToDatabase();
-
-    // 3. 检查邮箱是否已注册
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: '该邮箱已被注册',
-          data: null
-        },
-        { status: 409 }
-      );
-    }
-
-    // 4. 使用 bcrypt 哈希密码（加盐轮数：12）
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // 5. 创建用户记录
-    const newUser = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: role || 'driver', // 默认角色为试车员
-      status: 'active'
-    });
-
-    // 6. 返回用户信息（不包含密码）
-    return NextResponse.json(
+    // 3. 返回成功响应
+    return successResponse(
       {
-        success: true,
-        data: {
-          id: newUser._id.toString(),
-          name: newUser.name,
-          email: newUser.email,
-          role: newUser.role
-        },
-        error: null
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+        role: result.user.role,
       },
-      { status: 201 }
+      undefined,
+      201
     );
-
   } catch (error) {
     console.error('注册错误:', error);
-    
-    // 提供更详细的错误信息
-    let errorMessage = '注册失败，请稍后重试';
-    
-    if (error instanceof Error) {
-      // MongoDB 连接错误 - 使用 name 属性检查
-      if (error.name === 'MongoNetworkError' || error.name === 'MongooseServerSelectionError') {
-        errorMessage = '数据库连接失败，请检查网络连接';
+
+    // 处理 Service 层抛出的业务错误
+    if (error instanceof AuthServiceError) {
+      switch (error.code) {
+        case 'DUPLICATE_EMAIL':
+          return conflictResponse(error.message, error.details);
+        case 'DATABASE_ERROR':
+          return databaseErrorResponse(error.message);
+        case 'VALIDATION_ERROR':
+          return validationErrorResponse(error.message, error.details);
+        default:
+          return internalErrorResponse(error.message);
       }
-      // MongoDB 验证错误
-      else if (error.name === 'ValidationError') {
-        errorMessage = '数据验证失败，请检查输入信息';
-      }
-      // 配置错误
-      else if (error.message.includes('MONGODB_URI')) {
-        errorMessage = '数据库配置错误';
-      }
-      // 其他连接相关错误
-      else if (error.message.toLowerCase().includes('connect') || 
-               error.message.includes('ECONNREFUSED') ||
-               error.message.includes('ETIMEDOUT')) {
-        errorMessage = '数据库连接失败，请检查网络连接';
-      }
-      
-      console.error('详细错误信息:', error.message);
     }
-    
-    return NextResponse.json(
-      {
-        success: false,
-        error: errorMessage,
-        data: null
-      },
-      { status: 500 }
+
+    // 其他未知错误
+    return internalErrorResponse(
+      '注册失败，请稍后重试',
+      error instanceof Error ? { message: error.message } : undefined
     );
   }
 }
