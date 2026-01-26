@@ -97,6 +97,426 @@
 
 ---
 
+## 🎯 开发动作标准 (Action Standards)
+
+**作为 AI 编程助手的核心技能，你必须严格遵循以下三大原则**：
+
+### 原则 1: 状态机优先原则 (State Machine First)
+
+**适用场景**：任何涉及业务流程、状态流转的功能开发或修改
+
+**执行标准**：
+1. **在编写任何代码之前**，必须先输出 XState 可视化逻辑描述
+2. 使用 Mermaid 语法绘制状态转换图
+3. 明确定义：
+   - 所有可能的状态（states）
+   - 状态之间的转换事件（events）
+   - 转换条件（guards）
+   - 副作用动作（actions）
+
+**示例**：当用户要求"实现预约审批流程"时，你必须先输出：
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending: 创建预约
+    pending --> reviewing: 提交审批 (SUBMIT)
+    reviewing --> approved: 审批通过 (APPROVE)
+    reviewing --> rejected: 审批拒绝 (REJECT)
+    approved --> in-progress: 开始执行 (START)
+    in-progress --> completed: 完成 (COMPLETE)
+    rejected --> [*]
+    completed --> [*]
+    
+    note right of reviewing
+        守卫条件: 
+        - 申请人有效
+        - 资源可用
+    end note
+```
+
+**然后提供对应的 XState 代码**：
+
+```typescript
+// lib/state-machines/booking-approval.machine.ts
+import { createMachine, assign } from 'xstate';
+
+export const bookingApprovalMachine = createMachine({
+  id: 'bookingApproval',
+  initial: 'pending',
+  context: {
+    bookingId: null,
+    reviewerId: null,
+    rejectionReason: null,
+  },
+  states: {
+    pending: {
+      on: {
+        SUBMIT: {
+          target: 'reviewing',
+          actions: 'notifyReviewer',
+        },
+      },
+    },
+    reviewing: {
+      on: {
+        APPROVE: {
+          target: 'approved',
+          cond: 'hasValidResources',
+          actions: 'recordApproval',
+        },
+        REJECT: {
+          target: 'rejected',
+          actions: assign({
+            rejectionReason: (_, event) => event.reason,
+          }),
+        },
+      },
+    },
+    approved: {
+      on: {
+        START: {
+          target: 'in-progress',
+          actions: 'notifyUser',
+        },
+      },
+    },
+    'in-progress': {
+      on: {
+        COMPLETE: {
+          target: 'completed',
+          actions: 'finalizeBooking',
+        },
+      },
+    },
+    rejected: { type: 'final' },
+    completed: { type: 'final' },
+  },
+});
+```
+
+---
+
+### 原则 2: 规则解耦原则 (Rule Decoupling)
+
+**适用场景**：任何涉及条件判断、计算、权限控制、业务规则的逻辑
+
+**执行标准**：
+1. **在实现判断逻辑前**，必须主动询问用户：
+   - "这个逻辑是否需要未来动态调整？"
+   - "是否需要将此规则配置化到 Zen Engine JSON 文件？"
+2. 如果满足以下任一条件，**强制**使用 Zen Engine：
+   - 规则涉及多个条件组合判断
+   - 规则可能频繁变化（如定价策略、折扣规则）
+   - 规则需要业务人员可配置（无需开发介入）
+3. 规则文件位置：`lib/rules/[domain-name].rules.json`
+4. Service 层必须通过 Zen Engine 调用规则，而非硬编码判断
+
+**示例对话**：
+
+**用户**："实现车辆预约费用计算功能"
+
+**AI 响应**：
+> 🤔 **规则解耦检查**：
+> 
+> 我注意到费用计算涉及以下判断条件：
+> - 车型类型（SUV/轿车/卡车）
+> - 场地类型（高速环道/测试场）
+> - 预约时长（≤2h / 2-4h / >4h）
+> - 是否高峰时段
+> - 用户会员等级
+> 
+> **建议使用 Zen Engine 配置化此规则**，原因：
+> 1. ✅ 规则复杂（5 个维度组合判断）
+> 2. ✅ 定价策略可能随市场调整
+> 3. ✅ 业务人员需要灵活配置
+> 
+> 是否需要我创建 `lib/rules/fee-calculation.rules.json` 文件？
+
+**如果用户确认，则提供**：
+
+```json
+// lib/rules/fee-calculation.rules.json
+{
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "inputNode",
+      "content": {
+        "fields": [
+          { "name": "vehicleType", "type": "string" },
+          { "name": "venueType", "type": "string" },
+          { "name": "duration", "type": "number" },
+          { "name": "isPeakHour", "type": "boolean" },
+          { "name": "userLevel", "type": "string" }
+        ]
+      }
+    },
+    {
+      "id": "base-fee-calculation",
+      "type": "decisionTableNode",
+      "content": {
+        "hitPolicy": "first",
+        "rules": [
+          {
+            "condition": "vehicleType == 'SUV' && venueType == 'track'",
+            "result": { "baseFee": 500 }
+          },
+          {
+            "condition": "vehicleType == 'sedan' && venueType == 'test-pad'",
+            "result": { "baseFee": 300 }
+          }
+        ]
+      }
+    },
+    {
+      "id": "duration-discount",
+      "type": "decisionTableNode",
+      "content": {
+        "rules": [
+          { "condition": "duration <= 2", "result": { "discount": 0 } },
+          { "condition": "duration > 2 && duration <= 4", "result": { "discount": 0.1 } },
+          { "condition": "duration > 4", "result": { "discount": 0.2 } }
+        ]
+      }
+    },
+    {
+      "id": "peak-multiplier",
+      "type": "expressionNode",
+      "content": {
+        "expression": "isPeakHour ? baseFee * 1.5 : baseFee"
+      }
+    },
+    {
+      "id": "user-level-discount",
+      "type": "decisionTableNode",
+      "content": {
+        "rules": [
+          { "condition": "userLevel == 'VIP'", "result": { "userDiscount": 0.2 } },
+          { "condition": "userLevel == 'Gold'", "result": { "userDiscount": 0.1 } },
+          { "condition": "userLevel == 'Regular'", "result": { "userDiscount": 0 } }
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "type": "outputNode",
+      "content": {
+        "fields": [
+          { "name": "finalFee", "type": "number" },
+          { "name": "breakdown", "type": "object" }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    { "source": "input", "target": "base-fee-calculation" },
+    { "source": "base-fee-calculation", "target": "duration-discount" },
+    { "source": "duration-discount", "target": "peak-multiplier" },
+    { "source": "peak-multiplier", "target": "user-level-discount" },
+    { "source": "user-level-discount", "target": "output" }
+  ]
+}
+```
+
+**以及 Service 层集成代码**：
+
+```typescript
+// lib/db/services/fee-calculator.service.ts
+import { ZenEngine } from '@gorules/zen-engine';
+import feeRules from '@/lib/rules/fee-calculation.rules.json';
+
+export class FeeCalculatorService {
+  private static engine = new ZenEngine();
+  private static decision = this.engine.createDecision(feeRules);
+
+  static async calculateFee(input: {
+    vehicleType: string;
+    venueType: string;
+    duration: number;
+    isPeakHour: boolean;
+    userLevel: string;
+  }) {
+    const result = await this.decision.evaluate(input);
+    return {
+      finalFee: result.finalFee,
+      breakdown: result.breakdown,
+    };
+  }
+}
+```
+
+---
+
+### 原则 3: 闭环验证原则 (Closed-Loop Verification)
+
+**适用场景**：所有代码生成任务完成后
+
+**执行标准**：
+1. **代码生成后立即**，主动提供对应的 Playwright 测试代码
+2. 测试必须覆盖：
+   - 正常流程（Happy Path）
+   - 边界情况（Edge Cases）
+   - 错误处理（Error Handling）
+3. 测试文件位置：`__tests__/e2e/[feature-name].spec.ts`
+4. 测试必须可直接运行，无需用户修改
+
+**示例**：当完成"预约审批流程"功能后，必须主动提供：
+
+```typescript
+// __tests__/e2e/booking-approval.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('预约审批流程', () => {
+  test.beforeEach(async ({ page }) => {
+    // 登录为管理员
+    await page.goto('/login');
+    await page.fill('[name="username"]', 'admin');
+    await page.fill('[name="password"]', 'admin123');
+    await page.click('button[type="submit"]');
+    await expect(page).toHaveURL('/dashboard');
+  });
+
+  test('正常流程：提交审批 → 通过 → 开始执行 → 完成', async ({ page }) => {
+    // Step 1: 创建预约
+    await page.goto('/dashboard/bookings/new');
+    await page.selectOption('[name="vehicleId"]', { label: 'Tesla Model 3' });
+    await page.selectOption('[name="venueId"]', { label: '高速环道' });
+    await page.fill('[name="startTime"]', '2026-01-28T09:00');
+    await page.fill('[name="endTime"]', '2026-01-28T11:00');
+    await page.click('button:has-text("创建预约")');
+    
+    await expect(page.locator('.toast-success')).toContainText('预约创建成功');
+    
+    // Step 2: 提交审批
+    await page.click('button:has-text("提交审批")');
+    await expect(page.locator('.booking-status')).toContainText('reviewing');
+    
+    // Step 3: 审批通过
+    await page.goto('/dashboard/approvals');
+    await page.click('.approval-item:first-child button:has-text("通过")');
+    await page.fill('[name="reviewComment"]', '资源充足，审批通过');
+    await page.click('button:has-text("确认通过")');
+    
+    await expect(page.locator('.toast-success')).toContainText('审批成功');
+    
+    // Step 4: 开始执行
+    await page.goto('/dashboard/bookings');
+    await page.click('.booking-item:first-child');
+    await page.click('button:has-text("开始执行")');
+    await expect(page.locator('.booking-status')).toContainText('in-progress');
+    
+    // Step 5: 完成任务
+    await page.click('button:has-text("完成")');
+    await page.fill('[name="feedback"]', '测试顺利完成');
+    await page.click('button:has-text("提交反馈")');
+    
+    await expect(page.locator('.booking-status')).toContainText('completed');
+  });
+
+  test('边界情况：审批被拒绝', async ({ page }) => {
+    // 创建预约
+    await page.goto('/dashboard/bookings/new');
+    await page.selectOption('[name="vehicleId"]', { label: 'Tesla Model 3' });
+    await page.selectOption('[name="venueId"]', { label: '高速环道' });
+    await page.fill('[name="startTime"]', '2026-01-28T09:00');
+    await page.fill('[name="endTime"]', '2026-01-28T11:00');
+    await page.click('button:has-text("创建预约")');
+    
+    // 提交审批
+    await page.click('button:has-text("提交审批")');
+    
+    // 审批拒绝
+    await page.goto('/dashboard/approvals');
+    await page.click('.approval-item:first-child button:has-text("拒绝")');
+    await page.fill('[name="rejectionReason"]', '场地维护中，暂不可用');
+    await page.click('button:has-text("确认拒绝")');
+    
+    await expect(page.locator('.toast-info')).toContainText('审批已拒绝');
+    
+    // 验证状态为 rejected
+    await page.goto('/dashboard/bookings');
+    await expect(page.locator('.booking-item:first-child .status')).toContainText('rejected');
+  });
+
+  test('错误处理：未授权用户无法审批', async ({ page }) => {
+    // 退出管理员，登录为普通用户
+    await page.click('[data-testid="user-menu"]');
+    await page.click('text=退出登录');
+    
+    await page.goto('/login');
+    await page.fill('[name="username"]', 'driver');
+    await page.fill('[name="password"]', 'driver123');
+    await page.click('button[type="submit"]');
+    
+    // 尝试访问审批页面
+    await page.goto('/dashboard/approvals');
+    
+    // 验证权限错误
+    await expect(page.locator('.error-message')).toContainText('无权限访问');
+  });
+
+  test('边界情况：资源不可用时无法审批通过', async ({ page }) => {
+    // 创建预约
+    await page.goto('/dashboard/bookings/new');
+    await page.selectOption('[name="vehicleId"]', { label: '维修中的车辆' });
+    await page.selectOption('[name="venueId"]', { label: '高速环道' });
+    await page.fill('[name="startTime"]', '2026-01-28T09:00');
+    await page.fill('[name="endTime"]', '2026-01-28T11:00');
+    await page.click('button:has-text("创建预约")');
+    
+    await page.click('button:has-text("提交审批")');
+    
+    // 尝试审批通过
+    await page.goto('/dashboard/approvals');
+    await page.click('.approval-item:first-child button:has-text("通过")');
+    await page.click('button:has-text("确认通过")');
+    
+    // 验证错误提示
+    await expect(page.locator('.toast-error')).toContainText('车辆当前不可用');
+  });
+});
+```
+
+**测试运行命令**：
+```bash
+npx playwright test __tests__/e2e/booking-approval.spec.ts
+```
+
+---
+
+### 🎯 三大原则协同示例
+
+**用户需求**："实现一个车辆预约功能，包括审批流程和动态定价"
+
+**AI 执行流程**：
+
+1. **应用原则 1 (状态机优先)**
+   - 先输出预约状态机 Mermaid 图
+   - 提供 XState 代码定义
+
+2. **应用原则 2 (规则解耦)**
+   - 询问："定价规则是否需要配置化？"
+   - 创建 `lib/rules/booking-fee.rules.json`
+   - 提供 Service 层集成代码
+
+3. **应用原则 3 (闭环验证)**
+   - 提供完整的 Playwright E2E 测试
+   - 覆盖正常流程、边界情况、错误处理
+
+---
+
+### 📋 开发动作标准检查清单
+
+在开始编码前，请确认：
+
+- [ ] **状态流转场景**：是否已输出 XState 状态图和代码？
+- [ ] **判断逻辑场景**：是否已询问是否需要 Zen Engine 配置化？
+- [ ] **代码生成完成**：是否已提供对应的 Playwright 测试代码？
+- [ ] **测试覆盖**：是否覆盖了正常流程、边界情况和错误处理？
+
+---
+
 ## 🧠 核心技术架构规范 (Core Architecture)
 
 ### 1. 状态管理：XState
