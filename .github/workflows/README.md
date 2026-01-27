@@ -21,14 +21,38 @@
 - ✅ 详细的执行日志和统计报告
 
 **自动创建的标签**:
+
+**功能模块标签**:
 - `infrastructure` - 基础设施和工具任务
+- `foundation` - 基础和核心设置任务
 - `data-layer` - 数据模型和数据库架构
+- `service-layer` - Service 层实现
+- `api-layer` - API 路由和端点
+- `ui-layer` - UI 组件和页面
+- `business-ui` - 业务特定的 UI 组件
+- `state-machine` - XState 状态机实现
+- `rules-engine` - Zen Engine 业务规则
+- `testing` - 测试和测试基础设施
 - `documentation` - 文档改进
+
+**优先级标签**:
 - `priority:P0` - 最高优先级（必须首先完成）
 - `priority:P1` - 高优先级（重要任务）
+- `priority:P2` - 中等优先级（应尽快完成）
+- `priority:P3` - 低优先级（可以推迟）
+- `priority:P4` - 很低优先级（可选）
+
+**复杂度标签**:
+- `complexity:very-high` - 极高复杂度任务
 - `complexity:high` - 高复杂度任务
 - `complexity:medium` - 中等复杂度任务
+- `complexity:low` - 低复杂度任务
+
+**并行标签**:
 - `parallel:yes` - 可以并行工作
+- `parallel:no` - 不能并行工作
+
+**其他标签**:
 - `auto-created` - 自动创建的 Issue（默认标签）
 
 **使用方法**: 参见 [HOW_TO_RUN.md](./HOW_TO_RUN.md)
