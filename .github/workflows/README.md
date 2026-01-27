@@ -14,10 +14,22 @@
 **触发方式**: 手动触发（`workflow_dispatch`）
 
 **特性**:
+- ✅ **自动创建缺失的标签** - 在创建 Issue 前自动检查并创建所需的 Labels
 - ✅ 自动读取所有 Markdown 文件
 - ✅ 提取文件标题和标签
 - ✅ 防止重复创建（可选）
 - ✅ 详细的执行日志和统计报告
+
+**自动创建的标签**:
+- `infrastructure` - 基础设施和工具任务
+- `data-layer` - 数据模型和数据库架构
+- `documentation` - 文档改进
+- `priority:P0` - 最高优先级（必须首先完成）
+- `priority:P1` - 高优先级（重要任务）
+- `complexity:high` - 高复杂度任务
+- `complexity:medium` - 中等复杂度任务
+- `parallel:yes` - 可以并行工作
+- `auto-created` - 自动创建的 Issue（默认标签）
 
 **使用方法**: 参见 [HOW_TO_RUN.md](./HOW_TO_RUN.md)
 
@@ -139,8 +151,33 @@ gh run view --log
 2. **不要在工作流中硬编码敏感信息**，使用 Secrets 管理
 3. **定期检查工作流运行日志**，及时发现问题
 4. **使用有意义的工作流名称**，便于团队成员理解
+5. **Label 自动创建**: 工作流会自动创建缺失的标签，无需手动创建
 
 ---
 
-**最后更新**: 2024-01-27  
+## 🔧 故障排查
+
+### 问题: 工作流运行失败，提示 "Label does not exist"
+
+**解决方案**: 此问题已在最新版本中修复。工作流现在会自动检查并创建所有必需的标签。如果仍然遇到问题：
+
+1. 确认您使用的是最新版本的 `init-issues.yml`
+2. 检查工作流的 Step 2 是否正常执行（"检查并创建 Labels"）
+3. 验证 GITHUB_TOKEN 是否有创建标签的权限
+
+### 问题: 标签颜色或描述需要修改
+
+**解决方案**: 编辑 `.github/workflows/init-issues.yml` 文件中的 `REQUIRED_LABELS` 数组：
+
+```yaml
+declare -a REQUIRED_LABELS=(
+  "label-name|COLOR_CODE|Description"
+)
+```
+
+其中 `COLOR_CODE` 是 6 位十六进制颜色代码（不含 `#` 前缀）
+
+---
+
+**最后更新**: 2026-01-27  
 **维护者**: SmartTrack Team
