@@ -1,0 +1,126 @@
+{
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "inputNode",
+      "position": { "x": 100, "y": 100 },
+      "content": {
+        "fields": [
+          { "name": "driverLicenseValid", "field": "driverLicenseValid", "fieldType": "boolean" },
+          { "name": "vehicleStatus", "field": "vehicleStatus", "fieldType": "string" },
+          { "name": "vehicleInsuranceValid", "field": "vehicleInsuranceValid", "fieldType": "boolean" },
+          { "name": "venueRequiresExperience", "field": "venueRequiresExperience", "fieldType": "boolean" },
+          { "name": "driverExperienceYears", "field": "driverExperienceYears", "fieldType": "number" },
+          { "name": "hasConflict", "field": "hasConflict", "fieldType": "boolean" },
+          { "name": "userLevel", "field": "userLevel", "fieldType": "string" },
+          { "name": "monthlyBookingCount", "field": "monthlyBookingCount", "fieldType": "number" }
+        ]
+      }
+    },
+    {
+      "id": "validation-rules",
+      "type": "decisionTableNode",
+      "position": { "x": 500, "y": 100 },
+      "content": {
+        "key": "access-validation",
+        "hitPolicy": "collect",
+        "inputs": [
+          { "field": "driverLicenseValid", "name": "驾照有效" },
+          { "field": "vehicleStatus", "name": "车辆状态" },
+          { "field": "vehicleInsuranceValid", "name": "保险有效" },
+          { "field": "venueRequiresExperience", "name": "场地要求经验" },
+          { "field": "driverExperienceYears", "name": "驾龄（年）" },
+          { "field": "hasConflict", "name": "存在冲突" },
+          { "field": "userLevel", "name": "用户等级" },
+          { "field": "monthlyBookingCount", "name": "本月预约次数" }
+        ],
+        "outputs": [
+          { "field": "isValid", "name": "是否有效", "fieldType": "boolean" },
+          { "field": "rejectReason", "name": "拒绝原因", "fieldType": "string" }
+        ],
+        "rules": [
+          {
+            "_id": "rule-license",
+            "driverLicenseValid": "== false",
+            "isValid": false,
+            "rejectReason": "驾驶证无效或已过期，请更新后重试"
+          },
+          {
+            "_id": "rule-vehicle-status",
+            "vehicleStatus": "!= 'available'",
+            "isValid": false,
+            "rejectReason": "车辆当前不可用，请选择其他车辆"
+          },
+          {
+            "_id": "rule-insurance",
+            "vehicleInsuranceValid": "== false",
+            "isValid": false,
+            "rejectReason": "车辆保险已过期，无法预约"
+          },
+          {
+            "_id": "rule-experience",
+            "venueRequiresExperience": "== true",
+            "driverExperienceYears": "< 3",
+            "isValid": false,
+            "rejectReason": "该场地要求至少3年驾驶经验"
+          },
+          {
+            "_id": "rule-conflict",
+            "hasConflict": "== true",
+            "isValid": false,
+            "rejectReason": "该时段存在冲突，请选择其他时间"
+          },
+          {
+            "_id": "rule-quota-regular",
+            "userLevel": "== 'Regular'",
+            "monthlyBookingCount": ">= 5",
+            "isValid": false,
+            "rejectReason": "本月预约次数已达上限（5次），请升级为VIP会员"
+          },
+          {
+            "_id": "rule-quota-gold",
+            "userLevel": "== 'Gold'",
+            "monthlyBookingCount": ">= 10",
+            "isValid": false,
+            "rejectReason": "本月预约次数已达上限（10次）"
+          }
+        ]
+      }
+    },
+    {
+      "id": "aggregation",
+      "type": "expressionNode",
+      "position": { "x": 900, "y": 100 },
+      "content": {
+        "key": "result-aggregation",
+        "expressions": [
+          {
+            "key": "canProceed",
+            "value": "validationErrors.length == 0"
+          },
+          {
+            "key": "validationErrors",
+            "value": "collect(rejectReason)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "type": "outputNode",
+      "position": { "x": 1200, "y": 100 },
+      "content": {
+        "fields": [
+          { "name": "canProceed", "field": "canProceed", "fieldType": "boolean" },
+          { "name": "validationErrors", "field": "validationErrors", "fieldType": "array" }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceId": "input", "targetId": "validation-rules" },
+    { "id": "e2", "sourceId": "validation-rules", "targetId": "aggregation" },
+    { "id": "e3", "sourceId": "aggregation", "targetId": "output" }
+  ]
+}

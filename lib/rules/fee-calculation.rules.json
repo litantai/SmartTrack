@@ -1,0 +1,216 @@
+{
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input-node",
+      "type": "inputNode",
+      "position": { "x": 100, "y": 100 },
+      "content": {
+        "fields": [
+          { "name": "vehicleType", "field": "vehicleType", "fieldType": "string" },
+          { "name": "venueType", "field": "venueType", "fieldType": "string" },
+          { "name": "duration", "field": "duration", "fieldType": "number" },
+          { "name": "isPeakHour", "field": "isPeakHour", "fieldType": "boolean" },
+          { "name": "userLevel", "field": "userLevel", "fieldType": "string" }
+        ]
+      }
+    },
+    {
+      "id": "base-fee-table",
+      "type": "decisionTableNode",
+      "position": { "x": 400, "y": 100 },
+      "content": {
+        "key": "base-fee-calculation",
+        "hitPolicy": "first",
+        "inputs": [
+          { "field": "vehicleType", "name": "车型类型" },
+          { "field": "venueType", "name": "场地类型" }
+        ],
+        "outputs": [
+          { "field": "baseFee", "name": "基础费用" }
+        ],
+        "rules": [
+          {
+            "_id": "rule-1",
+            "vehicleType": "suv",
+            "venueType": "track",
+            "baseFee": 800
+          },
+          {
+            "_id": "rule-2",
+            "vehicleType": "suv",
+            "venueType": "test-pad",
+            "baseFee": 600
+          },
+          {
+            "_id": "rule-3",
+            "vehicleType": "sedan",
+            "venueType": "track",
+            "baseFee": 500
+          },
+          {
+            "_id": "rule-4",
+            "vehicleType": "sedan",
+            "venueType": "test-pad",
+            "baseFee": 350
+          },
+          {
+            "_id": "rule-5",
+            "vehicleType": "truck",
+            "venueType": "track",
+            "baseFee": 1200
+          },
+          {
+            "_id": "rule-6",
+            "vehicleType": "truck",
+            "venueType": "test-pad",
+            "baseFee": 900
+          },
+          {
+            "_id": "rule-7",
+            "vehicleType": "sport",
+            "venueType": "track",
+            "baseFee": 1000
+          },
+          {
+            "_id": "rule-8",
+            "vehicleType": "sport",
+            "venueType": "test-pad",
+            "baseFee": 700
+          },
+          {
+            "_id": "rule-9",
+            "vehicleType": "ev",
+            "venueType": "track",
+            "baseFee": 600
+          },
+          {
+            "_id": "rule-10",
+            "vehicleType": "ev",
+            "venueType": "test-pad",
+            "baseFee": 400
+          }
+        ]
+      }
+    },
+    {
+      "id": "duration-discount-table",
+      "type": "decisionTableNode",
+      "position": { "x": 700, "y": 100 },
+      "content": {
+        "key": "duration-discount",
+        "hitPolicy": "first",
+        "inputs": [
+          { "field": "duration", "name": "预约时长（小时）" }
+        ],
+        "outputs": [
+          { "field": "durationDiscount", "name": "时长折扣" }
+        ],
+        "rules": [
+          {
+            "_id": "duration-1",
+            "duration": "<= 2",
+            "durationDiscount": 1.0
+          },
+          {
+            "_id": "duration-2",
+            "duration": "> 2 && <= 4",
+            "durationDiscount": 0.9
+          },
+          {
+            "_id": "duration-3",
+            "duration": "> 4",
+            "durationDiscount": 0.8
+          }
+        ]
+      }
+    },
+    {
+      "id": "peak-hour-multiplier",
+      "type": "expressionNode",
+      "position": { "x": 1000, "y": 100 },
+      "content": {
+        "key": "peak-multiplier",
+        "expressions": [
+          {
+            "key": "peakMultiplier",
+            "value": "isPeakHour ? 1.5 : 1.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "user-level-discount-table",
+      "type": "decisionTableNode",
+      "position": { "x": 1300, "y": 100 },
+      "content": {
+        "key": "user-level-discount",
+        "hitPolicy": "first",
+        "inputs": [
+          { "field": "userLevel", "name": "用户等级" }
+        ],
+        "outputs": [
+          { "field": "userDiscount", "name": "会员折扣" }
+        ],
+        "rules": [
+          {
+            "_id": "level-1",
+            "userLevel": "VIP",
+            "userDiscount": 0.8
+          },
+          {
+            "_id": "level-2",
+            "userLevel": "Gold",
+            "userDiscount": 0.9
+          },
+          {
+            "_id": "level-3",
+            "userLevel": "Regular",
+            "userDiscount": 1.0
+          }
+        ]
+      }
+    },
+    {
+      "id": "final-calculation",
+      "type": "expressionNode",
+      "position": { "x": 1600, "y": 100 },
+      "content": {
+        "key": "final-fee-calculation",
+        "expressions": [
+          {
+            "key": "intermediateAmount",
+            "value": "baseFee * peakMultiplier"
+          },
+          {
+            "key": "finalFee",
+            "value": "intermediateAmount * durationDiscount * userDiscount"
+          }
+        ]
+      }
+    },
+    {
+      "id": "output-node",
+      "type": "outputNode",
+      "position": { "x": 1900, "y": 100 },
+      "content": {
+        "fields": [
+          { "name": "finalFee", "field": "finalFee", "fieldType": "number" },
+          { "name": "baseFee", "field": "baseFee", "fieldType": "number" },
+          { "name": "peakMultiplier", "field": "peakMultiplier", "fieldType": "number" },
+          { "name": "durationDiscount", "field": "durationDiscount", "fieldType": "number" },
+          { "name": "userDiscount", "field": "userDiscount", "fieldType": "number" },
+          { "name": "intermediateAmount", "field": "intermediateAmount", "fieldType": "number" }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceId": "input-node", "targetId": "base-fee-table" },
+    { "id": "e2", "sourceId": "base-fee-table", "targetId": "duration-discount-table" },
+    { "id": "e3", "sourceId": "duration-discount-table", "targetId": "peak-hour-multiplier" },
+    { "id": "e4", "sourceId": "peak-hour-multiplier", "targetId": "user-level-discount-table" },
+    { "id": "e5", "sourceId": "user-level-discount-table", "targetId": "final-calculation" },
+    { "id": "e6", "sourceId": "final-calculation", "targetId": "output-node" }
+  ]
+}
