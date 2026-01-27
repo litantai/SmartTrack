@@ -85,7 +85,7 @@ jobs:
             body=$(cat "$file")
 
             # 从文件内容中提取 Labels（查找 Labels: 行）
-            labels=$(grep -oP '(?<=\*\*Labels\*\*:\s)`)[^`]+(?=`)' "$file" | tr ',' '\n' | sed 's/`//g' | tr -d ' ' | paste -sd, -)
+            labels=$(grep -oP '(?<=\*\*Labels\*\*:\s)[\`][^\`]+[\`]' "$file" | tr ',' '\n' | sed 's/`//g' | tr -d ' ' | paste -sd, - || echo "")
 
             if [[ -z "$labels" ]]; then
               labels="auto-created"
@@ -114,7 +114,7 @@ jobs:
               --label "$labels" 2>&1); then
 
               # 提取 Issue 编号
-              issue_num=$(echo "$issue_number" | grep -oP 'https://github.com/.+/issues/\K\d+' || echo "$issue_number")
+              issue_num=$(echo "$issue_number" | grep -oP '/issues/\K\d+$' 2>/dev/null || echo "created")
               echo -e "  ${GREEN}✅ 成功创建 Issue #$issue_num${NC}"
               created_count=$((created_count + 1))
             else

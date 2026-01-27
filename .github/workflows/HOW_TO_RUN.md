@@ -285,5 +285,5 @@ gh run view --log
 
 ---
 
-**最后更新**: 2026-01-27
+**最后更新**: 2024-01-27
 **创建者**: GitHub Copilot AI Assistant
