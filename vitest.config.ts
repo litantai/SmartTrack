@@ -13,7 +13,6 @@ export default defineConfig({
       '**/dist/**',
       '**/.{idea,git,cache,output,temp}/**',
       '**/__tests__/unit/services/auth.service.mock.test.ts', // Jest-specific test
-      '**/__tests__/unit/services/base.service.test.ts', // Requires MongoDB download
     ],
     coverage: {
       provider: 'v8',

@@ -30,9 +30,9 @@ describe('BaseService - Vitest Example', () => {
     await expect(promise).resolves.toBe('success');
   });
 
-  it('should validate database connection is working', async () => {
-    // This test validates that MongoDB Memory Server is working
+  it('should validate mocked database connection is working', async () => {
+    // This test validates that Mongoose Mock is working
     const mongoose = await import('mongoose');
-    expect(mongoose.connection.readyState).toBe(1); // 1 = connected
+    expect(mongoose.connection.readyState).toBe(1); // 1 = connected (mocked)
   });
 });
